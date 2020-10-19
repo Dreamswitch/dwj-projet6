@@ -1,4 +1,6 @@
-const http = require('http');
+/* const fs = require('fs');
+const path = require('path'); */
+const http/* s */ = require('http');
 const app = require('./app');
 
 const normalizePort = val => {
@@ -38,7 +40,14 @@ const errorHandler = error => {
     }
 };
 
-const server = http.createServer(app);
+
+/* On récupère notre clé privée et notre certificat (ici ils se trouvent dans le dossier certificate) */
+/* const key = fs.readFileSync(path.join(__dirname, 'ssl', 'server.key'));
+const cert = fs.readFileSync(path.join(__dirname, 'ssl', 'server.cert'));
+ 
+const options = { key, cert };
+  */
+const server = http/* s */.createServer(/* options, */app);
 
 server.on('error',errorHandler);
 server.on('listening', () => {

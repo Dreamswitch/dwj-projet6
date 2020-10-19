@@ -1,46 +1,76 @@
 const Sauce = require('../models/Sauce');
 const fs = require('fs');
+const safeSauceControl = require('../modules/safeSauceControl');
 
-exports.createSauce = (req, res, next) => {
+
+exports.createSauce = async (req, res, next) => {
 
     const save = newSauce => {
         newSauce.save()
             .then(newSauce => res.status(201).json({ message: "sauce créée" }))
             .catch(error => res.status(400).json({ error }));
     }
-
     if (req.body.sauce) {
-        const sauceObject = JSON.parse(req.body.sauce);
-        delete sauceObject._id;
-        const sauce = new Sauce({
-            ...sauceObject,
-            likes: 0,
-            dislikes: 0,
-            usersLiked: [],
-            usersDisliked: [],
-            imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-        });
-        save(sauce);
+        try {
+            if (req.file.mimetype !== 'image/jpg' || req.file.mimetype !== 'image/jpeg' || req.file.mimetype !== 'image/png') {
+                res.status(401).json({ error :'invalid file format uploaded' });
+            }
+            console.log(req.file)
+
+            const sauceObject = JSON.parse(req.body.sauce);
+            console.log(sauceObject);
+            const isValid = await safeSauceControl.validateAsync(sauceObject);
+            if (isValid) {
+                delete sauceObject._id;
+                const sauce = new Sauce({
+                    ...sauceObject,
+                    likes: 0,
+                    dislikes: 0,
+                    usersLiked: [],
+                    usersDisliked: [],
+                    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+                });
+
+                save(sauce);
+            } else {
+                throw new Error('invalid data syntax');
+            }
+
+        } catch (error) {
+            res.status(401).json({ error });
+        }
     } else {
-        const sauceObject = req.body;
-        delete sauceObject._id;
-        const sauce = new Sauce({
-            userId: sauceObject.userId,
-            name: sauceObject.name,
-            manufacturer: sauceObject.manufacturer,
-            description: sauceObject.description,
-            mainPepper: sauceObject.mainPepper,
-            heat: sauceObject.heat,
-            imageUrl: "",
-            likes: 0,
-            dislikes: 0,
-            usersLiked: [],
-            usersDisliked: [],
-        });
-        save(sauce);
+        try {
+            const sauceObject = req.body;
+            const bodyObject = {
+                userId: sauceObject.userId,
+                name: sauceObject.name,
+                manufacturer: sauceObject.manufacturer,
+                description: sauceObject.description,
+                mainPepper: sauceObject.mainPepper,
+                heat: sauceObject.heat
+            };
+            const isValid = await safeSauceControl.validateAsync(sauceObject);
+            if (isValid) {
+                delete sauceObject._id;
+                const sauce = new Sauce({
+                    ...bodyObject,
+                    imageUrl: "",
+                    likes: 0,
+                    dislikes: 0,
+                    usersLiked: [],
+                    usersDisliked: [],
+                });
+                save(sauce);
+            } else {
+                throw new Error('invalid data syntax');
+            }
+
+        } catch (error) {
+            res.status(401).json({ error });
+        }
     }
 };
-
 
 exports.getOneSauce = (req, res, next) => {
     Sauce.findOne({ _id: req.params.id })
