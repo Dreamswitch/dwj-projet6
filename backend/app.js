@@ -5,16 +5,17 @@ const userRoutes = require('./routes/user');
 const sauceRoutes = require('./routes/sauce');
 const path = require('path');
 const helmet = require("helmet");
+const dotenv = require('dotenv').config();
 
 
 
-mongoose.connect('mongodb+srv://dev:dev@pekocko.as3oh.mongodb.net/pekocko?retryWrites=true&w=majority', {
+mongoose.connect(process.env.DB_USER_PROD, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useCreateIndex : true
 })
-    .then(() => { console.log('connexion mdb ok') })
-    .catch(() => { console.log('mdb not connected') });
+    .then(() => { console.log('connexion db ok') })
+    .catch(() => { console.log('db not connected') });
 
 
 const app = express();
