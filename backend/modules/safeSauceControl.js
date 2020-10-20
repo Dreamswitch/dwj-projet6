@@ -3,7 +3,7 @@ const Joi = require('joi');
 const safeSauceSchema = Joi.object({
 
     name: Joi.string()
-        .pattern(new RegExp('^[a-zA-Z0-9 .-]+$'))
+        .pattern(new RegExp('^[a-zA-Z0-9 &.-]+$'))
         .min(1)
         .max(70)
         .required(),

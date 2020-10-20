@@ -20,10 +20,10 @@ exports.signup = async (req, res, next) => {
           .catch(error => res.status(500).json({ error }));
     
         } else {
-            throw 'Invalid user ID';
+            throw new error('Invalid user ID');
         }
-    } catch {
-        res.status(401).json({error: 'Invalid request!'});
+    } catch (error){
+        res.status(401).json({error});
     }
 };
 

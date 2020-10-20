@@ -12,13 +12,11 @@ exports.createSauce = async (req, res, next) => {
     }
     if (req.body.sauce) {
         try {
-            if (req.file.mimetype !== 'image/jpg' || req.file.mimetype !== 'image/jpeg' || req.file.mimetype !== 'image/png') {
-                res.status(401).json({ error :'invalid file format uploaded' });
+            if (req.file.mimetype !== 'image/jpg' && req.file.mimetype !== 'image/jpeg' && req.file.mimetype !== 'image/png') {
+                console.log(req.file.mimetype)
+                res.status(401).json({ error: 'invalid file format uploaded' });
             }
-            console.log(req.file)
-
             const sauceObject = JSON.parse(req.body.sauce);
-            console.log(sauceObject);
             const isValid = await safeSauceControl.validateAsync(sauceObject);
             if (isValid) {
                 delete sauceObject._id;
@@ -30,7 +28,6 @@ exports.createSauce = async (req, res, next) => {
                     usersDisliked: [],
                     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
                 });
-
                 save(sauce);
             } else {
                 throw new Error('invalid data syntax');
@@ -40,35 +37,7 @@ exports.createSauce = async (req, res, next) => {
             res.status(401).json({ error });
         }
     } else {
-        try {
-            const sauceObject = req.body;
-            const bodyObject = {
-                userId: sauceObject.userId,
-                name: sauceObject.name,
-                manufacturer: sauceObject.manufacturer,
-                description: sauceObject.description,
-                mainPepper: sauceObject.mainPepper,
-                heat: sauceObject.heat
-            };
-            const isValid = await safeSauceControl.validateAsync(sauceObject);
-            if (isValid) {
-                delete sauceObject._id;
-                const sauce = new Sauce({
-                    ...bodyObject,
-                    imageUrl: "",
-                    likes: 0,
-                    dislikes: 0,
-                    usersLiked: [],
-                    usersDisliked: [],
-                });
-                save(sauce);
-            } else {
-                throw new Error('invalid data syntax');
-            }
-
-        } catch (error) {
-            res.status(401).json({ error });
-        }
+        res.status(400);
     }
 };
 
@@ -79,23 +48,37 @@ exports.getOneSauce = (req, res, next) => {
 };
 
 exports.modifySauce = async (req, res, next) => {
-    let sauceObject;
-    if (req.file) {
-        const sauce = await Sauce.findOne({ _id: req.params.id });
-        //ici on supprime l'ancienne image
-        const filename = sauce.imageUrl.split('/images/')[1];
-        fs.unlink(`images/${filename}`, () => {
-            console.log('contenu effacé');
-        });
-        //ici on injecte la nouvelle image dans sauceObject
-        sauceObject = { ...JSON.parse(req.body.sauce), imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` };
+    try {
+        let sauceObject;
+        if (req.file) {
+            if (req.file.mimetype === 'image/jpg' || req.file.mimetype === 'image/jpeg' || req.file.mimetype === 'image/png') {
 
-    } else {
-        sauceObject = { ...req.body };
+                console.log(req.file)
+                const sauce = await Sauce.findOne({ _id: req.params.id });
+                //ici on supprime l'ancienne image
+                const filename = sauce.imageUrl.split('/images/')[1];
+                fs.unlink(`images/${filename}`, () => {
+                    console.log('old image deleted & replaced');
+                });
+                //ici on injecte la nouvelle image dans sauceObject
+                sauceObject = { ...JSON.parse(req.body.sauce), imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}` };
+            } else {
+                res.status(400).json({ error: 'non mais oh' });
+            }
+        } else {
+            const isValid = await safeSauceControl.validateAsync({...req.body});
+            if (isValid) {
+                sauceObject = { ...req.body };
+            } else {
+                throw new Error(':p')
+            }
+        }
+        Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+            .then(() => res.status(200).json({ message: 'modified' }))
+            .catch(error => res.status(400).json({ error }));
+    } catch (error) {
+        res.status(400).json({ error });
     }
-    Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-        .then(() => res.status(200).json({ message: 'sauce modifié' }))
-        .catch(error => res.status(400).json({ error }));
 };
 
 exports.deleteSauce = (req, res, next) => {
