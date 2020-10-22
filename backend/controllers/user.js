@@ -1,11 +1,11 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const signInValidationSchema = require('../modules/SignInValidationSchema');
+const userSchema = require('../middlewares/Schema/userSchema');
 
 exports.signup = async (req, res, next) => {
     try {
-        const isValid = await signInValidationSchema.validateAsync(req.body);
+        const isValid = await userSchema.validateAsync(req.body);
         if (isValid) {
           bcrypt.hash(req.body.password, 10)
           .then(hash => {

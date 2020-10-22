@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userCtrl = require('../controllers/user');
-const requestLimiter = require('../modules/requestLimiter');
+const requestLimiter = require('../middlewares/requestLimiter');
 
 
 router.post('/signup', userCtrl.signup);

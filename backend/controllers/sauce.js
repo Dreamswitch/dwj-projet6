@@ -1,6 +1,6 @@
 const Sauce = require('../models/Sauce');
 const fs = require('fs');
-const safeSauceControl = require('../modules/safeSauceControl');
+const sauceSchema = require('../middlewares/Schema/sauceSchema');
 
 
 exports.createSauce = async (req, res, next) => {
@@ -17,7 +17,7 @@ exports.createSauce = async (req, res, next) => {
                 res.status(401).json({ error: 'invalid file format uploaded' });
             }
             const sauceObject = JSON.parse(req.body.sauce);
-            const isValid = await safeSauceControl.validateAsync(sauceObject);
+            const isValid = await sauceSchema.validateAsync(sauceObject);
             if (isValid) {
                 delete sauceObject._id;
                 const sauce = new Sauce({
@@ -66,7 +66,7 @@ exports.modifySauce = async (req, res, next) => {
                 res.status(400).json({ error: 'non mais oh' });
             }
         } else {
-            const isValid = await safeSauceControl.validateAsync({ ...req.body });
+            const isValid = await sauceSchema.validateAsync({ ...req.body });
             if (isValid) {
                 sauceObject = { ...req.body };
             } else {
