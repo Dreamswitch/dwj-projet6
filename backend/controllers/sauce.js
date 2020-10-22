@@ -66,7 +66,7 @@ exports.modifySauce = async (req, res, next) => {
                 res.status(400).json({ error: 'non mais oh' });
             }
         } else {
-            const isValid = await safeSauceControl.validateAsync({...req.body});
+            const isValid = await safeSauceControl.validateAsync({ ...req.body });
             if (isValid) {
                 sauceObject = { ...req.body };
             } else {
@@ -102,49 +102,82 @@ exports.getAllSauce = (req, res, next) => {
 
 exports.likeSauce = async (req, res, next) => {
     const sauce = await Sauce.findOne({ _id: req.params.id });
-    const user = { id: `${req.body.userId}` };
-    const isUserLiked = await sauce.usersLiked.filter(user => { return user.id === req.body.userId });
-    const isUserDisliked = await sauce.usersDisliked.filter(user => { return user.id === req.body.userId });
+    const user = req.body.userId;
+    const isUserLiked = sauce.usersLiked.filter(dbUser => dbUser === user);
+    const isUserDisliked = sauce.usersDisliked.filter(dbUser => dbUser === user);
+
     if (isUserLiked.length) { // if user has already like the sauce
         if (req.body.like === 0) { // if 0, user unvoted
-            sauce.likes--;
-            const alreadyVoted = await sauce.usersLiked.filter(user => { return user.id !== req.body.userId });
-            sauce.usersLiked = alreadyVoted;
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {likes: -1},
+                    $pull: {usersLiked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .catch(error => res.status(400).json({ error }));
         } else if (req.body.like === -1) { // if -1 , user has changed his point of view and now dislike
-            sauce.likes--;
-            sauce.dislikes++;
-            const alreadyVoted = await sauce.usersLiked.filter(user => { return user.id !== req.body.userId });
-            sauce.usersLiked = alreadyVoted;
-            sauce.usersDisliked.push(user);
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {likes: -1,dislikes: +1},
+                    $pull: {usersLiked: user},
+                    $push: {usersDisliked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .catch(error => res.status(400).json({ error }));
         } else {
-            console.log('you have already liked');
-            res.status(200);
+            res.send('already liked');
         }
     } else if (isUserDisliked.length) { // if user has already dislike the sauce
         if (req.body.like === 0) { // if 0, user unvoted
-            sauce.dislikes--;
-            const alreadyVoted = await sauce.usersDisliked.filter(user => { return user.id !== req.body.userId });
-            sauce.usersDisliked = alreadyVoted;
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {dislikes: -1},
+                    $pull: {usersDisliked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .catch(error => res.status(400).json({ error }));
         } else if (req.body.like === 1) { // if +1 , user has changed his point of view and now like
-            sauce.dislikes--;
-            sauce.likes++;
-            const alreadyVoted = await sauce.usersDisliked.filter(user => { return user.id !== req.body.userId });
-            sauce.usersDisliked = alreadyVoted;
-            sauce.usersLiked.push(user);
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {likes: 1,dislikes: -1},
+                    $pull: {usersDisliked: user},
+                    $push: {usersLiked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .catch(error => res.status(400).json({ error }));
         } else {
-            console.log('you have already disliked');
-            res.status(200);
+            res.send('already disliked');
         }
-    } else {
+    } else { // first like/unlike from the user
         if (req.body.like === 1) {
-            sauce.likes++;
-            sauce.usersLiked.push(user);
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {likes: 1},
+                    $push: {usersLiked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .catch(error => res.status(400).json({ error }));
         } else {
-            sauce.dislikes++;
-            sauce.usersDisliked.push(user);
+            Sauce.updateOne(
+                { _id: req.params.id },
+                {
+                    $inc: {dislikes: 1},
+                    $push: {usersDisliked: user}
+                }
+            )
+            .then(() => res.status(201).json({ message: "sauce disliked" }))
+            .catch(error => res.status(400).json({ error }));
         }
     }
-    sauce.save()
-        .then(() => res.status(201).json({ message: "sauce liked" }))
-        .catch(error => res.status(400).json({ error }));
+
 };
