@@ -115,7 +115,7 @@ exports.likeSauce = async (req, res, next) => {
                     $pull: {usersLiked: user}
                 }
             )
-            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .then(() => res.status(201).json({ message: "sauce unvoted" }))
             .catch(error => res.status(400).json({ error }));
         } else if (req.body.like === -1) { // if -1 , user has changed his point of view and now dislike
             Sauce.updateOne(
@@ -126,7 +126,7 @@ exports.likeSauce = async (req, res, next) => {
                     $push: {usersDisliked: user}
                 }
             )
-            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .then(() => res.status(201).json({ message: "liked to disliked" }))
             .catch(error => res.status(400).json({ error }));
         } else {
             res.send('already liked');
@@ -140,7 +140,7 @@ exports.likeSauce = async (req, res, next) => {
                     $pull: {usersDisliked: user}
                 }
             )
-            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .then(() => res.status(201).json({ message: "sauce unvoted" }))
             .catch(error => res.status(400).json({ error }));
         } else if (req.body.like === 1) { // if +1 , user has changed his point of view and now like
             Sauce.updateOne(
@@ -151,7 +151,7 @@ exports.likeSauce = async (req, res, next) => {
                     $push: {usersLiked: user}
                 }
             )
-            .then(() => res.status(201).json({ message: "sauce liked" }))
+            .then(() => res.status(201).json({ message: "disliked to liked" }))
             .catch(error => res.status(400).json({ error }));
         } else {
             res.send('already disliked');
